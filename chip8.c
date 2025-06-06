@@ -49,6 +49,10 @@ int chip8_init(Chip8* chip8) {
     int start_address = 0x50;
     memcpy(chip8->memory + start_address, font, sizeof(font));
 
+    // Initialise timers to 0
+    chip8->delay_timer = 0;
+    chip8->sound_timer = 0;
+
     return 0;
 }
 
@@ -189,6 +193,9 @@ int decode_and_execute(uint16_t instruction, Chip8* chip8) {
             break;
         case 0xA:
             chip8->I = nnn;
+            break;
+        case 0xC:
+            chip8->V[x] = (rand() % 256) & nn;
             break;
         case 0xD:
             configure_display(chip8, x, y, n);
