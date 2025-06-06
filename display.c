@@ -1,6 +1,19 @@
 #include <SDL2/SDL.h>
 #include "chip8.h"
+#include "display.h"
 #define SCALE 10
+
+void open_window(SDLContext* sdl_context) {
+    SDL_Init(SDL_INIT_VIDEO);
+    sdl_context->window = SDL_CreateWindow("CHIP-8 Emulator",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        640, 320,
+        SDL_WINDOW_SHOWN
+    );
+    sdl_context->renderer = SDL_CreateRenderer(sdl_context->window, -1, SDL_RENDERER_ACCELERATED);
+
+    return;
+}
 
 void draw_display(Chip8* chip8, SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
