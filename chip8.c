@@ -3,10 +3,31 @@
 #include <SDL2/SDL.h>
 #include "chip8.h"
 
+int load_rom(Chip8* chip8, char* filename) {
+    FILE* program = fopen(filename, "rb");
+    if (!program) {
+        fclose(program);
+        return 1;
+    }
+    
+    fseek(program, 0, SEEK_END);
+    long file_size = ftell(program);
+    rewind(program);
+    
+    size_t bytes_read = fread(chip8->memory + 0x200, 1, file_size, program);
+    fclose(program);
+    
+    if (bytes_read != file_size) return 1;
+    return 0;
+}
+
 int chip8_init(Chip8* chip8) {
     memset(chip8, 0, sizeof(Chip8));
+    int rom_failed = load_rom(chip8, "./roms/ibm-logo.ch8");
+    if (rom_failed) return 1;
+
     // Chip8 programs start at memory address 0x200
-    chip8->pc = 512;
+    chip8->pc = 0x200;
 
     char font[5*16] = {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -28,13 +49,8 @@ int chip8_init(Chip8* chip8) {
     };
 
     // Load font into 0x50 to 0x9F memory slots
-    int start_address = 80;
-    int font_digit = 0;
-    while (font_digit < sizeof(font)) {
-        chip8->memory[start_address] = font[font_digit];
-        start_address += 1;
-        font_digit += 1;
-    }
+    int start_address = 0x50;
+    memcpy(chip8->memory + start_address, font, sizeof(font));
 
     return 0;
 }
