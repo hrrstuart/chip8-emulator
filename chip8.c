@@ -5,10 +5,7 @@
 
 int load_rom(Chip8* chip8, char* filename) {
     FILE* program = fopen(filename, "rb");
-    if (!program) {
-        fclose(program);
-        return 1;
-    }
+    if (!program) return 1;
     
     fseek(program, 0, SEEK_END);
     long file_size = ftell(program);
@@ -57,10 +54,33 @@ int chip8_init(Chip8* chip8) {
 
 // Set the CHIP-8 display array to new values
 int configure_display(Chip8* chip8, uint8_t x, uint8_t y, uint8_t n) {
-    uint8_t x_coord = chip8->V[x];
-    uint8_t y_coord = chip8->V[y];
+    uint8_t x_coord = chip8->V[x] % 64;
+    uint8_t y_coord = chip8->V[y] % 32;
+    chip8->V[0xF] = 0;
 
-    return 1; // Not implemented error
+    for (int y = 0; y < n; y++) {
+        uint8_t sprite_row = chip8->memory[chip8->I + y];
+        x_coord = chip8->V[x] % 64;
+        for (int i = 0; i < 8; i++) {
+            int bit = (sprite_row >> (7-i)) & 1;
+            int index = (y_coord%32) * 64 + (x_coord % 64);
+            if (bit == 1) {
+                uint8_t already_on = chip8->display[index];
+                if (already_on) {
+                    chip8->display[index] = 0;
+                    chip8->V[0xF] = 1;
+                } else {
+                    chip8->display[index] = 1;
+                }
+            }
+            x_coord += 1;
+            if (x_coord >= 64) break;
+        }
+        y_coord += 1;
+        if (y_coord >= 32) break;
+    }
+
+    return 0; // Not implemented error
 }
 
 uint16_t fetch_memory(Chip8* chip8) {
@@ -107,5 +127,5 @@ int decode_and_execute(uint16_t instruction, Chip8* chip8) {
 
 int chip8_cycle(Chip8* chip8) {
     uint16_t instruction = fetch_memory(chip8);
-    return 0;
+    return decode_and_execute(instruction, chip8);
 }
