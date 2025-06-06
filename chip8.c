@@ -144,6 +144,49 @@ int decode_and_execute(uint16_t instruction, Chip8* chip8) {
         case 0x7: // Add nn to VX
             chip8->V[x] += nn;
             break;
+        case 0x8: // Set VX to something
+            switch (n) {
+                case 0x0: // Set VX to VY
+                    chip8->V[x] = chip8->V[y];
+                    break;
+                case 0x1: // Set VX to VX|VY (bitwise OR)
+                    chip8->V[x] = chip8->V[x] | chip8->V[y];
+                    break;
+                case 0x2: // Set VX to VX&VY (bitwise AND)
+                    chip8->V[x] = chip8->V[x] & chip8->V[y];
+                    break;
+                case 0x3: // Set VX to VX^VY (bitwise XOR)
+                    chip8->V[x] = chip8->V[x] ^ chip8->V[y];
+                    break;
+                case 0x4: // Set VX to VX+VY
+                    chip8->V[x] = chip8->V[x] + chip8->V[y];
+                    if (chip8->V[x] > 0xFF) {
+                        chip8->V[0xF] = 1;
+                    } else {
+                        chip8->V[0xF] = 0;
+                    }
+                    break;
+                case 0x5: // Set VX to VX-VY
+                    chip8->V[0xF] = (chip8->V[x] >= chip8->V[y]) ? 1 : 0;
+                    chip8->V[x] = chip8->V[x] - chip8->V[y];
+                    break;
+                case 0x7: // Set VX to VY-VX
+                    chip8->V[0xF] = (chip8->V[y] >= chip8->V[x]) ? 1 : 0;
+                    chip8->V[x] = chip8->V[y] - chip8->V[x];
+                    break;
+                case 0x6: // Put VY into VX and shift VX to right by one bit
+                    chip8->V[x] = chip8->V[y];
+                    chip8->V[0xF] = chip8->V[x] & 0x1;
+                    chip8->V[x] >>= 1;
+                    break;
+                case 0xE: // Put VY into VX and shift VX to left by one bit
+                    chip8->V[x] = chip8->V[y];
+                    chip8->V[0xF] = (chip8->V[x] >> 7) & 0x1;
+                    chip8->V[x] <<= 1;
+                    break;
+                    
+            }
+            break;
         case 0xA:
             chip8->I = nnn;
             break;
