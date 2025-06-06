@@ -118,6 +118,26 @@ int decode_and_execute(uint16_t instruction, Chip8* chip8) {
             chip8->sp++;
             chip8->pc = nnn;
             break;
+        case 0x3: // If VX == nn, skip one instruction
+            if (chip8->V[x] == nn) {
+                chip8->pc += 2;
+            }
+            break;
+        case 0x4: // If VX != nn, skip one instruction
+            if (chip8->V[x] != nn) {
+                chip8->pc += 2;
+            }
+            break;
+        case 0x5: // If VX == VY, skip one instruction
+            if (chip8->V[x] == chip8->V[y]) {
+                chip8->pc += 2;
+            }
+            break;
+        case 0x9: // If VX != VY, skip one instruction
+            if (chip8->V[x] != chip8->V[y]) {
+                chip8->pc += 2;
+            }
+            break;
         case 0x6: // Set VX to nn
             chip8->V[x] = nn;
             break;
