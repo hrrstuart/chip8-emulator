@@ -102,16 +102,26 @@ int decode_and_execute(uint16_t instruction, Chip8* chip8) {
     // What to do based on first nibble
     switch ((instruction & 0xF000)>>12) {
         case 0x0: // 00E0
-            memset(chip8->display, 0, sizeof(chip8->display));
-            chip8->draw_flag = 1;
+            if (nnn == 0x0E0) {
+                memset(chip8->display, 0, sizeof(chip8->display));
+                chip8->draw_flag = 1;
+            } else if (nnn == 0x0EE) {
+                chip8->sp--;
+                chip8->pc = chip8->stack[chip8->sp];
+            }
             break;
-        case 0x1:
+        case 0x1: // Set pc to nnn
             chip8->pc = nnn;
             break;
-        case 0x6: // 6XNN
+        case 0x2: // Call subroutine at CHIP-8 memory location nnn
+            chip8->stack[chip8->sp] = chip8->pc;
+            chip8->sp++;
+            chip8->pc = nnn;
+            break;
+        case 0x6: // Set VX to nn
             chip8->V[x] = nn;
             break;
-        case 0x7:
+        case 0x7: // Add nn to VX
             chip8->V[x] += nn;
             break;
         case 0xA:
