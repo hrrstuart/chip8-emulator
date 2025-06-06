@@ -14,5 +14,6 @@ typedef struct {
 } Chip8;
 
 int chip8_init(Chip8* chip8);
+int chip8_cycle(Chip8* chip8);
 
 #endif

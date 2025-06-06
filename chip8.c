@@ -37,3 +37,7 @@ int chip8_init(Chip8* chip8) {
 
     return 0;
 }
+
+int chip8_cycle(Chip8* chip8) {
+    return 0;
+}
