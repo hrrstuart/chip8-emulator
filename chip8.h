@@ -7,6 +7,7 @@ typedef struct {
     uint8_t memory[4096];
     uint16_t V[16];
     uint16_t pc;
+    uint8_t sp;
     uint16_t I;
     uint16_t stack[16];
     uint8_t display[64*32];
