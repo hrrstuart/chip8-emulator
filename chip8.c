@@ -38,6 +38,15 @@ int chip8_init(Chip8* chip8) {
     return 0;
 }
 
+uint16_t fetch_memory(Chip8* chip8) {
+    uint8_t byte_one = chip8->memory[chip8->pc];
+    uint8_t byte_two = chip8->memory[chip8->pc + 1];
+    chip8->pc += 2;
+    
+    return byte_one<<8|byte_two;
+}
+
 int chip8_cycle(Chip8* chip8) {
+    uint16_t memory = fetch_memory(chip8);
     return 0;
 }
