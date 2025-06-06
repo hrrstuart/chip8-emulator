@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <SDL2/SDL.h>
 #include "chip8.h"
 
 int chip8_init(Chip8* chip8) {
@@ -38,6 +39,14 @@ int chip8_init(Chip8* chip8) {
     return 0;
 }
 
+// Set the CHIP-8 display array to new values
+int configure_display(Chip8* chip8, uint8_t x, uint8_t y, uint8_t n) {
+    uint8_t x_coord = chip8->V[x];
+    uint8_t y_coord = chip8->V[y];
+
+    return 1; // Not implemented error
+}
+
 uint16_t fetch_memory(Chip8* chip8) {
     uint8_t byte_one = chip8->memory[chip8->pc];
     uint8_t byte_two = chip8->memory[chip8->pc + 1];
@@ -46,7 +55,41 @@ uint16_t fetch_memory(Chip8* chip8) {
     return byte_one<<8|byte_two;
 }
 
+int decode_and_execute(uint16_t instruction, Chip8* chip8) {
+    // Split into nibbles
+    uint8_t x = (instruction & 0x0F00) >> 8; // 2nd nibble
+    uint8_t y = (instruction & 0x00F0) >> 4; // 3rd nibble
+    uint8_t n = (instruction & 0x000F); // 4th nibble
+    uint8_t nn = (instruction & 0x00FF); // 3rd and 4th nibble
+    uint16_t nnn = (instruction & 0x0FFF); // 2nd, 3rd, and 4th nibble
+
+    // What to do based on first nibble
+    switch ((instruction & 0xF000)>>12) {
+        case 0x0: // 00E0
+            memset(chip8->display, 0, sizeof(chip8->display));
+            chip8->draw_flag = 1;
+            break;
+        case 0x1:
+            chip8->pc = nnn;
+            break;
+        case 0x6: // 6XNN
+            chip8->V[x] = nn;
+            break;
+        case 0x7:
+            chip8->V[x] += nn;
+            break;
+        case 0xA:
+            chip8->I = nnn;
+            break;
+        case 0xD:
+            configure_display(chip8, x, y, n);
+            chip8->draw_flag = 1;
+            break;
+    }
+    return 0;
+}
+
 int chip8_cycle(Chip8* chip8) {
-    uint16_t memory = fetch_memory(chip8);
+    uint16_t instruction = fetch_memory(chip8);
     return 0;
 }
