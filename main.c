@@ -23,7 +23,10 @@ int main(int argc, char *argv[]) {
 
     int i = 0;
     while (1) {
-        chip8_cycle(&chip8);
+        int program_exit = chip8_cycle(&chip8);
+        if (program_exit) {
+            break;
+        }
 
         if (chip8.draw_flag) {
             draw_display(&chip8, sdl_context.renderer);
@@ -49,6 +52,8 @@ int main(int argc, char *argv[]) {
         }
         start = now;
     }
+
+    close_window(&sdl_context);
 
     return 0;
 }
