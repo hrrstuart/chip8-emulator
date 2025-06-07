@@ -15,6 +15,20 @@ void open_window(SDLContext* sdl_context) {
     return;
 }
 
+void close_window(SDLContext* sdl_context) {
+    if (sdl_context->renderer) {
+        SDL_DestroyRenderer(sdl_context->renderer);
+        sdl_context->renderer = NULL;
+    }
+
+    if (sdl_context->window) {
+        SDL_DestroyWindow(sdl_context->window);
+        sdl_context->window = NULL;
+    }
+
+    SDL_Quit();
+}
+
 void draw_display(Chip8* chip8, SDL_Renderer* renderer) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);

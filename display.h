@@ -9,7 +9,9 @@ typedef struct {
     SDL_Window* window;
 } SDLContext;
 
+
 void open_window(SDLContext* sdl_context);
+void close_window(SDLContext* sdl_context);
 void draw_display(Chip8* chip8, SDL_Renderer* renderer);
 
 #endif
