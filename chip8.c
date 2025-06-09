@@ -3,6 +3,8 @@
 #include <SDL2/SDL.h>
 #include "chip8.h"
 
+#define FONT_ADDRESS 0x50
+
 // CHIP-8 key mapping: maps 0x0-0xF to SDL scancodes
 // e.g. QWERTY keyboard 1 <=> CHIP-8 keyboard 1
 // QWERTY V <=> CHIP-8 F
@@ -34,6 +36,20 @@ int is_chip8_key_pressed(uint8_t key) {
     return 0;
 }
 
+// Returns 0 if key not found, 1 if key found
+int fetch_chip8_key_pressed(uint8_t* key_out) {
+    const Uint8* keystate = SDL_GetKeyboardState(NULL);
+    
+    for (uint8_t i = 0; i < 16; i++) {
+        if (keystate[chip8_keymap[i]]) {
+            *key_out = i;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 int load_rom(Chip8* chip8, char* filename) {
     FILE* program = fopen(filename, "rb");
     if (!program) return 1;
@@ -51,7 +67,7 @@ int load_rom(Chip8* chip8, char* filename) {
 
 int chip8_init(Chip8* chip8) {
     memset(chip8, 0, sizeof(Chip8));
-    int rom_failed = load_rom(chip8, "./roms/ibm-logo.ch8");
+    int rom_failed = load_rom(chip8, "./roms/Tetris.ch8");
     if (rom_failed) return 1;
 
     // Chip8 programs start at memory address 0x200
@@ -77,8 +93,7 @@ int chip8_init(Chip8* chip8) {
     };
 
     // Load font into 0x50 to 0x9F memory slots
-    int start_address = 0x50;
-    memcpy(chip8->memory + start_address, font, sizeof(font));
+    memcpy(chip8->memory + FONT_ADDRESS, font, sizeof(font));
 
     // Initialise timers to 0
     chip8->delay_timer = 0;
@@ -245,11 +260,76 @@ int decode_and_execute(uint16_t instruction, Chip8* chip8) {
                     break;
             }
             break;
+        case 0xF:
+            switch (nn) {
+                case 0x07: // Set VX to delay_timer
+                    chip8->V[x] = chip8->delay_timer;
+                    break;
+                case 0x15: // Set delay_timer to VX
+                    chip8->delay_timer = chip8->V[x];
+                    break;
+                case 0x18: // Set sound_timer to VX
+                    chip8->sound_timer = chip8->V[x];
+                    break;
+                case 0x1E: // Set index register to VX
+                    chip8->I += chip8->V[x];
+                    if (chip8->I > 0x1000) { // If index register overflows, set VF to 1
+                        chip8->V[0xF] = 1;
+                    }
+                    break;
+                case 0x0A: // Stop program until a key is pressed, set key to VX
+                    uint8_t key_out;
+                    if (fetch_chip8_key_pressed(&key_out)) {
+                        chip8->V[x] = key_out;
+                    } else {
+                        chip8->pc -= 2;
+                    }
+                    break;
+                case 0x29: // Set index register to address of font character in memory of VX
+                    chip8->I = FONT_ADDRESS + chip8->V[x]*5;
+                    break;
+                case 0x33:
+                    int decimal = chip8->V[x];
+                    
+                    // Get the 3 digits from VX in decimal form
+                    int digit_3 = decimal % 10;
+                    decimal /= 10;
+                    int digit_2 = decimal % 10;
+                    decimal /= 10;
+                    int digit_1 = decimal % 10;
+
+                    // Set 3 digits in memory at I, I+1, I+2
+                    chip8->memory[chip8->I] = digit_1;
+                    chip8->memory[chip8->I + 1] = digit_2;
+                    chip8->memory[chip8->I + 2] = digit_3;
+                    break;
+                case 0x55: // Move (V0, VX) into (Memory[I], Memory[I+X])
+                    for (int i = 0; i <= x; i++) {
+                        chip8->memory[chip8->I + i] = chip8->V[i];
+                    }
+                    break;
+                case 0x65: // Move (Memory[I], Memory[I+X]) into (V0, VX)
+                    for (int i = 0; i <= x; i++) {
+                        chip8->V[i] = chip8->memory[chip8->I + i];
+                    }
+                    break;
+            }
+            break;
+
+        default:
+            printf("\nMade it passed all opcodes");
+            printf("\n%04x", instruction);
     }
     return 0;
 }
 
 int chip8_cycle(Chip8* chip8) {
+    const Uint8* keystate = SDL_GetKeyboardState(NULL);
+    if (keystate[SDL_SCANCODE_ESCAPE]) {
+        printf("Exiting program");
+        return 1;
+    }
+
     uint16_t instruction = fetch_memory(chip8);
     return decode_and_execute(instruction, chip8);
 }
